@@ -1,0 +1,69 @@
+specVersion: 0.0.2
+description: Integral is an AMM-based DEX that mirrors liquidity on other top exchanges.
+repository: https://github.com/IntegralHQ/Integral-SIZE-TheGraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: TwapFactory
+    network: mainnet
+    source:
+      abi: TwapFactory
+      address: '0xC480b33eE5229DE3FbDFAD1D2DCD3F3BAD0C56c6'
+      startBlock: 14422957
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/pair.ts
+      entities:
+        - Pair
+        - Token
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: ERC20SymbolBytes
+          file: ./abis/ERC20SymbolBytes.json
+        - name: ERC20NameBytes
+          file: ./abis/ERC20NameBytes.json
+        - name: TwapFactory
+          file: ./abis/TwapFactory.json
+        - name: TwapReader
+          file: ./abis/TwapReader.json
+      eventHandlers:
+        - event: PairCreated(indexed address,indexed address,address,uint256)
+          handler: handlePairCreated
+templates:
+  - kind: ethereum/contract
+    name: Pair
+    network: mainnet
+    source:
+      abi: TwapPair
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      file: ./src/pair.ts
+      entities:
+        - Pair
+        - Token
+      abis:
+        - name: TwapFactory
+          file: ./abis/TwapFactory.json
+        - name: TwapPair
+          file: ./abis/TwapPair.json
+        - name: TwapReader
+          file: ./abis/TwapReader.json
+        - name: UniswapFactoryV2
+          file: ./abis/UniswapFactoryV2.json
+        - name: UniswapPairV2
+          file: ./abis/UniswapPairV2.json
+      eventHandlers:
+        - event: Mint(indexed address,uint256,uint256,uint256,indexed address)
+          handler: handleMint
+        - event: Burn(indexed address,uint256,uint256,uint256,indexed address)
+          handler: handleBurn
+        - event: Swap(indexed address,uint256,uint256,uint256,uint256,indexed address)
+          handler: handleSwap
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
