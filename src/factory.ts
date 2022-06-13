@@ -13,6 +13,8 @@ export function loadOrCreateFactory(): Factory {
     factory.untrackedVolumeUSD = ZERO_BD
     factory.totalLiquidityUSD = ZERO_BD
     factory.totalLiquidityETH = ZERO_BD
+    factory.totalFeesUSD = ZERO_BD
+    factory.totalFeesETH = ZERO_BD
     factory.txCount = ZERO_BI
 
     createBundle()

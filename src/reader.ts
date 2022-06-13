@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts"
 import { ONE_BD, readerContract } from "./constants"
-import { convertTokenToDecimal } from "./helpers"
+import { convertBigIntToBigDecimal } from "./helpers"
 
 export function getPairReserves(pairAddress: Address): BigInt[] {
   const pairParams = readerContract.getPairParameters(pairAddress)
@@ -10,7 +10,7 @@ export function getPairReserves(pairAddress: Address): BigInt[] {
 // Returns the price of token0 in token1.
 export function getToken0Price(pairAddress: Address, token1Decimals: BigInt): BigDecimal {
   const pairParams = readerContract.getPairParameters(pairAddress)
-  return convertTokenToDecimal(pairParams.value3, token1Decimals)
+  return convertBigIntToBigDecimal(pairParams.value3, token1Decimals)
 }
 
 // Returns the price of token1 in token0.

@@ -6,11 +6,12 @@ import {
   Mint as MintEvent,
   Burn as BurnEvent,
   Swap as SwapEvent,
-  Transfer as TransferEvent } from '../generated/templates/Pair/TwapPair'
+  Transfer as TransferEvent, 
+  SetSwapFee} from '../generated/templates/Pair/TwapPair'
 import { PairCreated as PairCreatedEvent } from '../generated/TwapFactory/TwapFactory'
 import { updateDayData, updatePairDayData, updatePairHourData, updateTokenDayData } from './dayUpdates'
 import { loadOrCreateFactory } from './factory'
-import { convertTokenToDecimal } from './helpers'
+import { convertBigIntToBigDecimal } from './helpers'
 import { getTrackedVolumeUSD } from './pricing'
 import { loadOrCreateToken } from './token'
 import { createLiquidityPosition, createLiquiditySnapshot } from './liquidity'
@@ -43,6 +44,8 @@ export function handlePairCreated(event: PairCreatedEvent): void {
     pair.volumeToken1 = ZERO_BD
     pair.volumeUSD = ZERO_BD
     pair.untrackedVolumeUSD = ZERO_BD
+    pair.swapFeeRate = ZERO_BD
+    pair.feesUSD = ZERO_BD
     pair.token0Price = ZERO_BD
     pair.token1Price = ZERO_BD
     
@@ -94,7 +97,7 @@ export function handleTransfer(event: TransferEvent): void {
   const pairContract = PairContract.bind(event.address)
 
   // liquidity token amount being transfered
-  const value = convertTokenToDecimal(event.params.value, BI_18)
+  const value = convertBigIntToBigDecimal(event.params.value, BI_18)
 
   // get or create transaction
   let transaction = Transaction.load(transactionHash)
@@ -241,7 +244,7 @@ export function handleTransfer(event: TransferEvent): void {
   if (from.toHexString() != ADDRESS_ZERO && from.toHexString() != pair.id) {
     const fromUserLiquidityPosition = createLiquidityPosition(event.address, from)
     if (fromUserLiquidityPosition) {
-      fromUserLiquidityPosition.liquidityTokenBalance = convertTokenToDecimal(pairContract.balanceOf(from), BI_18)
+      fromUserLiquidityPosition.liquidityTokenBalance = convertBigIntToBigDecimal(pairContract.balanceOf(from), BI_18)
       fromUserLiquidityPosition.save()
       createLiquiditySnapshot(fromUserLiquidityPosition, event)
     }
@@ -250,7 +253,7 @@ export function handleTransfer(event: TransferEvent): void {
   if (event.params.to.toHexString() != ADDRESS_ZERO && to.toHexString() != pair.id) {
     const toUserLiquidityPosition = createLiquidityPosition(event.address, to)
     if (toUserLiquidityPosition) {
-      toUserLiquidityPosition.liquidityTokenBalance = convertTokenToDecimal(pairContract.balanceOf(to), BI_18)
+      toUserLiquidityPosition.liquidityTokenBalance = convertBigIntToBigDecimal(pairContract.balanceOf(to), BI_18)
       toUserLiquidityPosition.save()
       createLiquiditySnapshot(toUserLiquidityPosition, event)
     }
@@ -297,8 +300,8 @@ export function handleMint(event: MintEvent): void {
 
   // update exchange info (except balances, sync will cover that)
   // TODO: update balances, as we don't have sync
-  const token0Amount = convertTokenToDecimal(event.params.amount0In, token0.decimals)
-  const token1Amount = convertTokenToDecimal(event.params.amount1In, token1.decimals)
+  const token0Amount = convertBigIntToBigDecimal(event.params.amount0In, token0.decimals)
+  const token1Amount = convertBigIntToBigDecimal(event.params.amount1In, token1.decimals)
 
   // update txn counts
   token0.txCount = token0.txCount.plus(ONE_BI)
@@ -382,8 +385,8 @@ export function handleBurn(event: BurnEvent): void {
     return
   }
 
-  const token0Amount = convertTokenToDecimal(event.params.amount0Out, token0.decimals)
-  const token1Amount = convertTokenToDecimal(event.params.amount1Out, token1.decimals)
+  const token0Amount = convertBigIntToBigDecimal(event.params.amount0Out, token0.decimals)
+  const token1Amount = convertBigIntToBigDecimal(event.params.amount1Out, token1.decimals)
 
   // update txn counts
   token0.txCount = token0.txCount.plus(ONE_BI)
@@ -434,7 +437,7 @@ export function handleBurn(event: BurnEvent): void {
 }
 
 export function handleSwap(event: SwapEvent): void {
-  const thisFunctionName = 'handleBurn'
+  const thisFunctionName = 'handleSwap'
 
   const pair = Pair.load(event.address.toHexString())
   if (!pair) {
@@ -454,10 +457,10 @@ export function handleSwap(event: SwapEvent): void {
     return
   }
 
-  const amount0In = convertTokenToDecimal(event.params.amount0In, token0.decimals)
-  const amount1In = convertTokenToDecimal(event.params.amount1In, token1.decimals)
-  const amount0Out = convertTokenToDecimal(event.params.amount0Out, token0.decimals)
-  const amount1Out = convertTokenToDecimal(event.params.amount1Out, token1.decimals)
+  const amount0In = convertBigIntToBigDecimal(event.params.amount0In, token0.decimals)
+  const amount1In = convertBigIntToBigDecimal(event.params.amount1In, token1.decimals)
+  const amount0Out = convertBigIntToBigDecimal(event.params.amount0Out, token0.decimals)
+  const amount1Out = convertBigIntToBigDecimal(event.params.amount1Out, token1.decimals)
 
   // totals for volume updates
   const amount0Total = amount0Out.plus(amount0In)
@@ -483,25 +486,32 @@ export function handleSwap(event: SwapEvent): void {
     trackedAmountETH = trackedAmountUSD.div(bundle.ethPrice)
   }
 
-  // update token0 global volume and token liquidity stats
+  // calculate fees from tracked amounts
+  const feesUSD = trackedAmountUSD.times(pair.swapFeeRate)
+  const feesETH = trackedAmountETH.times(pair.swapFeeRate)
+
+  // update token0 stats
   token0.tradeVolume = token0.tradeVolume.plus(amount0In.plus(amount0Out))
   token0.tradeVolumeUSD = token0.tradeVolumeUSD.plus(trackedAmountUSD)
   token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token0.feesUSD = token0.feesUSD.plus(feesUSD)
 
-  // update token1 global volume and token liquidity stats
+  // update token1 stats
   token1.tradeVolume = token1.tradeVolume.plus(amount1In.plus(amount1Out))
   token1.tradeVolumeUSD = token1.tradeVolumeUSD.plus(trackedAmountUSD)
   token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token1.feesUSD = token1.feesUSD.plus(feesUSD)
 
   // update txn counts
   token0.txCount = token0.txCount.plus(ONE_BI)
   token1.txCount = token1.txCount.plus(ONE_BI)
 
-  // update pair volume data, use tracked amount if we have it as its probably more accurate
+  // update pair stats, use tracked amount if we have it as its probably more accurate
   pair.volumeUSD = pair.volumeUSD.plus(trackedAmountUSD)
   pair.volumeToken0 = pair.volumeToken0.plus(amount0Total)
   pair.volumeToken1 = pair.volumeToken1.plus(amount1Total)
   pair.untrackedVolumeUSD = pair.untrackedVolumeUSD.plus(derivedAmountUSD)
+  pair.feesUSD = pair.feesUSD.plus(feesUSD)
   pair.txCount = pair.txCount.plus(ONE_BI)
 
   // update global values, only used tracked amounts for volume
@@ -509,6 +519,8 @@ export function handleSwap(event: SwapEvent): void {
   factory.totalVolumeUSD = factory.totalVolumeUSD.plus(trackedAmountUSD)
   factory.totalVolumeETH = factory.totalVolumeETH.plus(trackedAmountETH)
   factory.untrackedVolumeUSD = factory.untrackedVolumeUSD.plus(derivedAmountUSD)
+  factory.totalFeesETH = factory.totalFeesETH.plus(feesETH)
+  factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
   factory.txCount = factory.txCount.plus(ONE_BI)
 
   // save entities
@@ -572,6 +584,7 @@ export function handleSwap(event: SwapEvent): void {
   dayData.dailyVolumeUSD = dayData.dailyVolumeUSD.plus(trackedAmountUSD)
   dayData.dailyVolumeETH = dayData.dailyVolumeETH.plus(trackedAmountETH)
   dayData.dailyVolumeUntracked = dayData.dailyVolumeUntracked.plus(derivedAmountUSD)
+  dayData.feesUSD = dayData.feesUSD.plus(feesUSD)
   dayData.save()
 
   // swap specific updating for pair
@@ -579,6 +592,7 @@ export function handleSwap(event: SwapEvent): void {
     pairDayData.dailyVolumeToken0 = pairDayData.dailyVolumeToken0.plus(amount0Total)
     pairDayData.dailyVolumeToken1 = pairDayData.dailyVolumeToken1.plus(amount1Total)
     pairDayData.dailyVolumeUSD = pairDayData.dailyVolumeUSD.plus(trackedAmountUSD)
+    pairDayData.feesUSD = pairDayData.feesUSD.plus(feesUSD)
     pairDayData.save()
   }
 
@@ -587,6 +601,7 @@ export function handleSwap(event: SwapEvent): void {
     pairHourData.hourlyVolumeToken0 = pairHourData.hourlyVolumeToken0.plus(amount0Total)
     pairHourData.hourlyVolumeToken1 = pairHourData.hourlyVolumeToken1.plus(amount1Total)
     pairHourData.hourlyVolumeUSD = pairHourData.hourlyVolumeUSD.plus(trackedAmountUSD)
+    pairHourData.feesUSD = pairHourData.feesUSD.plus(feesUSD)
     pairHourData.save()
   }
 
@@ -596,6 +611,7 @@ export function handleSwap(event: SwapEvent): void {
   token0DayData.dailyVolumeUSD = token0DayData.dailyVolumeUSD.plus(
     amount0Total.times(token0.derivedETH as BigDecimal).times(bundle.ethPrice)
   )
+  token0DayData.feesUSD = token0DayData.feesUSD.plus(feesUSD)
   token0DayData.save()
 
   // swap specific updating
@@ -604,5 +620,20 @@ export function handleSwap(event: SwapEvent): void {
   token1DayData.dailyVolumeUSD = token1DayData.dailyVolumeUSD.plus(
     amount1Total.times(token1.derivedETH as BigDecimal).times(bundle.ethPrice)
   )
+  token1DayData.feesUSD = token1DayData.feesUSD.plus(feesUSD)
   token1DayData.save()
+}
+
+export function handleSetSwapFeeEvent(event: SetSwapFee): void {
+  const thisFunctionName = 'handleSetSwapFeeEvent'
+
+  const pair = Pair.load(event.address.toHexString())
+  if (!pair) {
+    log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHex()])
+    return
+  }  
+  
+  pair.swapFeeRate = convertBigIntToBigDecimal(event.params.fee, BI_18)
+  
+  pair.save()
 }

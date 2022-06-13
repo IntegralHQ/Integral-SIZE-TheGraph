@@ -12,6 +12,11 @@ type Factory @entity {
   totalLiquidityUSD: BigDecimal!
   totalLiquidityETH: BigDecimal!
 
+  # total swap fees all time in USD
+  totalFeesUSD: BigDecimal!
+  # total swap fees all time in USD
+  totalFeesETH: BigDecimal!
+
   txCount: BigInt!
 }
 
@@ -36,11 +41,18 @@ type Token @entity {
   tradeVolumeUSD: BigDecimal!
   untrackedVolumeUSD: BigDecimal!
 
+  # token specific fees in USD
+  feesUSD: BigDecimal!
+
   # transactions across all pairs
   txCount: BigInt!
 
   # liquidity across all pairs
   totalLiquidity: BigDecimal!
+  totalLiquidityUSD: BigDecimal!
+
+  # required to properly calculate totalLiquidityUSD
+  lastEthPrice: BigDecimal!
 
   # derived prices
   derivedETH: BigDecimal!
@@ -69,6 +81,11 @@ type Pair @entity {
   reserveUSD: BigDecimal!
   # used for separating per pair reserves and global
   trackedReserveETH: BigDecimal!
+
+  swapFeeRate: BigDecimal!
+
+  # pair specific fees in USD
+  feesUSD: BigDecimal!
 
   # Price in terms of the asset pair
   token0Price: BigDecimal!
@@ -223,6 +240,8 @@ type DayData @entity {
   totalVolumeUSD: BigDecimal! # Accumulate at each trade, not just calculated off whatever totalVolume is. making it more accurate as it is a live conversion
   totalLiquidityUSD: BigDecimal!
 
+  feesUSD: BigDecimal!
+
   txCount: BigInt!
 }
 
@@ -240,6 +259,8 @@ type PairHourData @entity {
 
   # derived liquidity
   reserveUSD: BigDecimal!
+
+  feesUSD: BigDecimal!
 
   # volume stats
   hourlyVolumeToken0: BigDecimal!
@@ -266,6 +287,8 @@ type PairDayData @entity {
   # derived liquidity
   reserveUSD: BigDecimal!
 
+  feesUSD: BigDecimal!
+
   # volume stats
   dailyVolumeToken0: BigDecimal!
   dailyVolumeToken1: BigDecimal!
@@ -288,6 +311,8 @@ type TokenDayData @entity {
   totalLiquidityToken: BigDecimal!
   totalLiquidityETH: BigDecimal!
   totalLiquidityUSD: BigDecimal!
+
+  feesUSD: BigDecimal!
 
   # price stats
   priceUSD: BigDecimal!

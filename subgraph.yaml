@@ -67,3 +67,5 @@ templates:
           handler: handleSwap
         - event: Transfer(indexed address,indexed address,uint256)
           handler: handleTransfer
+        - event: SetSwapFee(uint256)
+          handler: handleSetSwapFeeEvent

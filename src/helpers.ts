@@ -10,11 +10,11 @@ export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   return bd
 }
 
-export function convertTokenToDecimal(tokenAmount: BigInt, exchangeDecimals: BigInt): BigDecimal {
-  if (exchangeDecimals == ZERO_BI) {
+export function convertBigIntToBigDecimal(tokenAmount: BigInt, decimals: BigInt): BigDecimal {
+  if (decimals == ZERO_BI) {
     return tokenAmount.toBigDecimal()
   }
-  return tokenAmount.toBigDecimal().div(exponentToBigDecimal(exchangeDecimals))
+  return tokenAmount.toBigDecimal().div(exponentToBigDecimal(decimals))
 }
 
 export function getUniswapV2PairContract(pairAddress: Address): UniswapPairV2 {

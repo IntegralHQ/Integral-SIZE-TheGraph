@@ -4,7 +4,7 @@ import { Address, BigDecimal, log } from '@graphprotocol/graph-ts/index'
 import { ADDRESS_ZERO, WETH_USDC_ADDRESS, factoryContract, ONE_BD, WETH_ADDRESS, ZERO_BD, WETH_DECIMALS, uniswapV2FactoryContract } from './constants'
 import { loadOrCreateBundle } from './bundle';
 import { getToken0Price, getToken1Price } from './reader';
-import { convertTokenToDecimal, getUniswapV2PairContract } from './helpers';
+import { convertBigIntToBigDecimal, getUniswapV2PairContract } from './helpers';
 
 export function getEthPriceInUSD(): BigDecimal {
   // WETH_USDC_ADDRESS pair: token0 = USDC, token1 = WETH
@@ -39,9 +39,9 @@ export function findEthPerToken(token: Token): BigDecimal {
       return ZERO_BD
     }
 
-    return token0.id == WETH_ADDRESS ?
-      getToken1Price(pairAddress, token1.decimals) :
-      getToken0Price(pairAddress, token1.decimals)
+    return token0.id == WETH_ADDRESS
+      ? getToken1Price(pairAddress, token1.decimals)
+      : getToken0Price(pairAddress, token1.decimals)
   }  
 
   // If we don't have the ETH-token pair, look for it on Uniswap.
@@ -57,14 +57,14 @@ export function findEthPerToken(token: Token): BigDecimal {
     const reserves = uniPair.getReserves()
 
     if (uniPair.token0().equals(Address.fromString(token.id))) {
-      const reserve0 = convertTokenToDecimal(reserves.value0, token.decimals);
-      const reserve1 = convertTokenToDecimal(reserves.value1, WETH_DECIMALS);
+      const reserve0 = convertBigIntToBigDecimal(reserves.value0, token.decimals);
+      const reserve1 = convertBigIntToBigDecimal(reserves.value1, WETH_DECIMALS);
       if (reserve0.notEqual(ZERO_BD)) {
         tokenPriceInEth = reserve1.div(reserve0)
       }
     } else {
-      const reserve0 = convertTokenToDecimal(reserves.value0, WETH_DECIMALS);
-      const reserve1 = convertTokenToDecimal(reserves.value1, token.decimals);
+      const reserve0 = convertBigIntToBigDecimal(reserves.value0, WETH_DECIMALS);
+      const reserve1 = convertBigIntToBigDecimal(reserves.value1, token.decimals);
       if (reserve1.notEqual(ZERO_BD)) {
         tokenPriceInEth = reserve0.div(reserve1)
       }

@@ -1,5 +1,5 @@
 # Integral Subgraph
-The Integral Subgraph aims, as much as possible, to provide the same data as the Uniswap subgraph.
+The Integral subgraph (SG) aims to provide a similar dataset and schema as the Uniswap subgraph.
 
 ## How to build
 ```shell
