@@ -115,7 +115,6 @@ export function loadOrCreateToken(tokenAddress: Address): Token | null {
     token.derivedETH = ZERO_BD
     token.tradeVolume = ZERO_BD
     token.tradeVolumeUSD = ZERO_BD
-    token.untrackedVolumeUSD = ZERO_BD
     token.totalLiquidity = ZERO_BD
     token.totalLiquidityUSD = ZERO_BD
     token.lastEthPrice = ZERO_BD

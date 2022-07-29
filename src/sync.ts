@@ -3,17 +3,17 @@ import { Factory, Pair, Token } from "../generated/schema"
 import { loadOrCreateBundle } from "./bundle"
 import { ONE_BD, ZERO_BD } from "./constants"
 import { convertBigIntToBigDecimal } from "./helpers"
-import { getEthPriceInUSD, findEthPerToken, getTrackedLiquidityUSD } from "./pricing"
+import { getEthPriceInUSD, findEthPerToken } from "./pricing"
 import { getToken0Price, getPairReserves } from "./reader"
 
 export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: Token): void {
-  // reset factory liquidity by subtracting only tarcked liquidity
-  factory.totalLiquidityETH = factory.totalLiquidityETH.minus(pair.trackedReserveETH)
+  // reset factory liquidity by subtracting this pair's liquidity
+  factory.totalLiquidityETH = factory.totalLiquidityETH.minus(pair.reserveETH)
 
   // Get current pair reserves
-  const pairReserves = getPairReserves(Address.fromString(pair.id))
-  const currentReserve0 = pairReserves[0]
-  const currentReserve1 = pairReserves[1]
+  const currentPairReserves = getPairReserves(Address.fromString(pair.id))
+  const currentReserve0 = currentPairReserves[0]
+  const currentReserve1 = currentPairReserves[1]
 
   // reset token total liquidity amounts
   token0.totalLiquidity = token0.totalLiquidity.minus(pair.reserve0)
@@ -41,23 +41,12 @@ export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: 
   token0.derivedETH = findEthPerToken(token0)
   token1.derivedETH = findEthPerToken(token1)
 
-  // get tracked liquidity - will be 0 if neither is in whitelist
-  let trackedLiquidityETH: BigDecimal
-  if (ethPrice.notEqual(ZERO_BD)) {
-    trackedLiquidityETH = getTrackedLiquidityUSD(pair.reserve0, token0, pair.reserve1, token1).div(ethPrice)
-  } else {
-    trackedLiquidityETH = ZERO_BD
-  }
-
-  // use derived amounts within pair
-  pair.trackedReserveETH = trackedLiquidityETH
   pair.reserveETH = pair.reserve0
     .times(token0.derivedETH)
     .plus(pair.reserve1.times(token1.derivedETH))
   pair.reserveUSD = pair.reserveETH.times(ethPrice)
 
-  // use tracked amounts globally
-  factory.totalLiquidityETH = factory.totalLiquidityETH.plus(trackedLiquidityETH)
+  factory.totalLiquidityETH = factory.totalLiquidityETH.plus(pair.reserveETH)
   factory.totalLiquidityUSD = factory.totalLiquidityETH.times(ethPrice)
 
   // now correctly set liquidity amounts for each token

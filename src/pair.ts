@@ -12,7 +12,6 @@ import { PairCreated as PairCreatedEvent } from '../generated/TwapFactory/TwapFa
 import { updateDayData, updatePairDayData, updatePairHourData, updateTokenDayData } from './dayUpdates'
 import { loadOrCreateFactory } from './factory'
 import { convertBigIntToBigDecimal } from './helpers'
-import { getTrackedVolumeUSD } from './pricing'
 import { loadOrCreateToken } from './token'
 import { createLiquidityPosition, createLiquiditySnapshot } from './liquidity'
 import { createUser } from './user'
@@ -36,14 +35,12 @@ export function handlePairCreated(event: PairCreatedEvent): void {
     pair.txCount = ZERO_BI
     pair.reserve0 = ZERO_BD
     pair.reserve1 = ZERO_BD
-    pair.trackedReserveETH = ZERO_BD
     pair.reserveETH = ZERO_BD
     pair.reserveUSD = ZERO_BD
     pair.totalSupply = ZERO_BD
     pair.volumeToken0 = ZERO_BD
     pair.volumeToken1 = ZERO_BD
     pair.volumeUSD = ZERO_BD
-    pair.untrackedVolumeUSD = ZERO_BD
     pair.swapFeeRate = ZERO_BD
     pair.feesUSD = ZERO_BD
     pair.token0Price = ZERO_BD
@@ -476,49 +473,35 @@ export function handleSwap(event: SwapEvent): void {
     .div(BigDecimal.fromString('2'))
   const derivedAmountUSD = derivedAmountETH.times(bundle.ethPrice)
 
-  // only accounts for volume through white listed tokens
-  const trackedAmountUSD = getTrackedVolumeUSD(amount0Total, token0, amount1Total, token1)
-
-  let trackedAmountETH: BigDecimal
-  if (bundle.ethPrice.equals(ZERO_BD)) {
-    trackedAmountETH = ZERO_BD
-  } else {
-    trackedAmountETH = trackedAmountUSD.div(bundle.ethPrice)
-  }
-
-  // calculate fees from tracked amounts
-  const feesUSD = trackedAmountUSD.times(pair.swapFeeRate)
-  const feesETH = trackedAmountETH.times(pair.swapFeeRate)
+  // calculate fees
+  const feesUSD = derivedAmountUSD.times(pair.swapFeeRate)
+  const feesETH = derivedAmountETH.times(pair.swapFeeRate)
 
   // update token0 stats
   token0.tradeVolume = token0.tradeVolume.plus(amount0In.plus(amount0Out))
-  token0.tradeVolumeUSD = token0.tradeVolumeUSD.plus(trackedAmountUSD)
-  token0.untrackedVolumeUSD = token0.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token0.tradeVolumeUSD = token0.tradeVolumeUSD.plus(derivedAmountUSD)
   token0.feesUSD = token0.feesUSD.plus(feesUSD)
 
   // update token1 stats
   token1.tradeVolume = token1.tradeVolume.plus(amount1In.plus(amount1Out))
-  token1.tradeVolumeUSD = token1.tradeVolumeUSD.plus(trackedAmountUSD)
-  token1.untrackedVolumeUSD = token1.untrackedVolumeUSD.plus(derivedAmountUSD)
+  token1.tradeVolumeUSD = token1.tradeVolumeUSD.plus(derivedAmountUSD)
   token1.feesUSD = token1.feesUSD.plus(feesUSD)
 
   // update txn counts
   token0.txCount = token0.txCount.plus(ONE_BI)
   token1.txCount = token1.txCount.plus(ONE_BI)
 
-  // update pair stats, use tracked amount if we have it as its probably more accurate
-  pair.volumeUSD = pair.volumeUSD.plus(trackedAmountUSD)
+  // update pair stats
+  pair.volumeUSD = pair.volumeUSD.plus(derivedAmountUSD)
   pair.volumeToken0 = pair.volumeToken0.plus(amount0Total)
   pair.volumeToken1 = pair.volumeToken1.plus(amount1Total)
-  pair.untrackedVolumeUSD = pair.untrackedVolumeUSD.plus(derivedAmountUSD)
   pair.feesUSD = pair.feesUSD.plus(feesUSD)
   pair.txCount = pair.txCount.plus(ONE_BI)
 
-  // update global values, only used tracked amounts for volume
+  // update global values
   const factory = loadOrCreateFactory()
-  factory.totalVolumeUSD = factory.totalVolumeUSD.plus(trackedAmountUSD)
-  factory.totalVolumeETH = factory.totalVolumeETH.plus(trackedAmountETH)
-  factory.untrackedVolumeUSD = factory.untrackedVolumeUSD.plus(derivedAmountUSD)
+  factory.totalVolumeUSD = factory.totalVolumeUSD.plus(derivedAmountUSD)
+  factory.totalVolumeETH = factory.totalVolumeETH.plus(derivedAmountETH)
   factory.totalFeesETH = factory.totalFeesETH.plus(feesETH)
   factory.totalFeesUSD = factory.totalFeesUSD.plus(feesUSD)
   factory.txCount = factory.txCount.plus(ONE_BI)
@@ -559,8 +542,7 @@ export function handleSwap(event: SwapEvent): void {
   swap.to = event.params.to
   swap.from = event.transaction.from
   swap.logIndex = event.logIndex
-  // use the tracked amount if we have it
-  swap.amountUSD = trackedAmountUSD === ZERO_BD ? derivedAmountUSD : trackedAmountUSD
+  swap.amountUSD = derivedAmountUSD
   swap.save()
 
   // update the transaction
@@ -581,9 +563,8 @@ export function handleSwap(event: SwapEvent): void {
   const token1DayData = updateTokenDayData(token1, event)
 
   // swap specific updating
-  dayData.dailyVolumeUSD = dayData.dailyVolumeUSD.plus(trackedAmountUSD)
-  dayData.dailyVolumeETH = dayData.dailyVolumeETH.plus(trackedAmountETH)
-  dayData.dailyVolumeUntracked = dayData.dailyVolumeUntracked.plus(derivedAmountUSD)
+  dayData.dailyVolumeUSD = dayData.dailyVolumeUSD.plus(derivedAmountUSD)
+  dayData.dailyVolumeETH = dayData.dailyVolumeETH.plus(derivedAmountETH)
   dayData.feesUSD = dayData.feesUSD.plus(feesUSD)
   dayData.save()
 
@@ -591,7 +572,7 @@ export function handleSwap(event: SwapEvent): void {
   if (pairDayData) {
     pairDayData.dailyVolumeToken0 = pairDayData.dailyVolumeToken0.plus(amount0Total)
     pairDayData.dailyVolumeToken1 = pairDayData.dailyVolumeToken1.plus(amount1Total)
-    pairDayData.dailyVolumeUSD = pairDayData.dailyVolumeUSD.plus(trackedAmountUSD)
+    pairDayData.dailyVolumeUSD = pairDayData.dailyVolumeUSD.plus(derivedAmountUSD)
     pairDayData.feesUSD = pairDayData.feesUSD.plus(feesUSD)
     pairDayData.save()
   }
@@ -600,7 +581,7 @@ export function handleSwap(event: SwapEvent): void {
   if (pairHourData) {
     pairHourData.hourlyVolumeToken0 = pairHourData.hourlyVolumeToken0.plus(amount0Total)
     pairHourData.hourlyVolumeToken1 = pairHourData.hourlyVolumeToken1.plus(amount1Total)
-    pairHourData.hourlyVolumeUSD = pairHourData.hourlyVolumeUSD.plus(trackedAmountUSD)
+    pairHourData.hourlyVolumeUSD = pairHourData.hourlyVolumeUSD.plus(derivedAmountUSD)
     pairHourData.feesUSD = pairHourData.feesUSD.plus(feesUSD)
     pairHourData.save()
   }

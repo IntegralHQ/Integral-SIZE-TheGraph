@@ -10,7 +10,6 @@ export function loadOrCreateFactory(): Factory {
     factory.pairCount = 0
     factory.totalVolumeUSD = ZERO_BD
     factory.totalVolumeETH = ZERO_BD
-    factory.untrackedVolumeUSD = ZERO_BD
     factory.totalLiquidityUSD = ZERO_BD
     factory.totalLiquidityETH = ZERO_BD
     factory.totalFeesUSD = ZERO_BD

@@ -6,9 +6,6 @@ type Factory @entity {
   totalVolumeUSD: BigDecimal!
   totalVolumeETH: BigDecimal!
 
-  # untracked values - less confident USD scores
-  untrackedVolumeUSD: BigDecimal!
-
   totalLiquidityUSD: BigDecimal!
   totalLiquidityETH: BigDecimal!
 
@@ -39,7 +36,6 @@ type Token @entity {
   # token specific volume
   tradeVolume: BigDecimal!
   tradeVolumeUSD: BigDecimal!
-  untrackedVolumeUSD: BigDecimal!
 
   # token specific fees in USD
   feesUSD: BigDecimal!
@@ -79,8 +75,6 @@ type Pair @entity {
   # derived liquidity
   reserveETH: BigDecimal!
   reserveUSD: BigDecimal!
-  # used for separating per pair reserves and global
-  trackedReserveETH: BigDecimal!
 
   swapFeeRate: BigDecimal!
 
@@ -95,7 +89,6 @@ type Pair @entity {
   volumeToken0: BigDecimal!
   volumeToken1: BigDecimal!
   volumeUSD: BigDecimal!
-  untrackedVolumeUSD: BigDecimal!
   txCount: BigInt!
 
   # creation stats
@@ -233,7 +226,6 @@ type DayData @entity {
 
   dailyVolumeETH: BigDecimal!
   dailyVolumeUSD: BigDecimal!
-  dailyVolumeUntracked: BigDecimal!
 
   totalVolumeETH: BigDecimal!
   totalLiquidityETH: BigDecimal!

@@ -17,7 +17,6 @@ export function updateDayData(event: ethereum.Event): DayData {
     dayData.dailyVolumeETH = ZERO_BD
     dayData.totalVolumeUSD = ZERO_BD
     dayData.totalVolumeETH = ZERO_BD
-    dayData.dailyVolumeUntracked = ZERO_BD
     dayData.feesUSD = ZERO_BD
     dayData.txCount = ZERO_BI
   }
