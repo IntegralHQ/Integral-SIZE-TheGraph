@@ -1,10 +1,10 @@
-import { Address, BigDecimal } from "@graphprotocol/graph-ts"
-import { Factory, Pair, Token } from "../generated/schema"
-import { loadOrCreateBundle } from "./bundle"
-import { ONE_BD, ZERO_BD } from "./constants"
-import { convertBigIntToBigDecimal } from "./helpers"
-import { getEthPriceInUSD, findEthPerToken } from "./pricing"
-import { getToken0Price, getPairReserves } from "./reader"
+import { Address } from '@graphprotocol/graph-ts'
+import { Factory, Pair, Token } from '../generated/schema'
+import { loadOrCreateBundle } from './bundle'
+import { ONE_BD, ZERO_BD } from './constants'
+import { convertBigIntToBigDecimal } from './helpers'
+import { getEthPriceInUSD, findEthPerToken } from './pricing'
+import { getToken0Price, getPairReserves } from './reader'
 
 export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: Token): void {
   // reset factory liquidity by subtracting this pair's liquidity
@@ -17,9 +17,13 @@ export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: 
 
   // reset token total liquidity amounts
   token0.totalLiquidity = token0.totalLiquidity.minus(pair.reserve0)
-  token0.totalLiquidityUSD = token0.totalLiquidityUSD.minus(pair.reserve0.times(token0.derivedETH).times(token0.lastEthPrice))
+  token0.totalLiquidityUSD = token0.totalLiquidityUSD.minus(
+    pair.reserve0.times(token0.derivedETH).times(token0.lastEthPrice)
+  )
   token1.totalLiquidity = token1.totalLiquidity.minus(pair.reserve1)
-  token1.totalLiquidityUSD = token1.totalLiquidityUSD.minus(pair.reserve1.times(token1.derivedETH).times(token1.lastEthPrice))
+  token1.totalLiquidityUSD = token1.totalLiquidityUSD.minus(
+    pair.reserve1.times(token1.derivedETH).times(token1.lastEthPrice)
+  )
 
   pair.reserve0 = convertBigIntToBigDecimal(currentReserve0, token0.decimals)
   pair.reserve1 = convertBigIntToBigDecimal(currentReserve1, token1.decimals)
@@ -41,9 +45,7 @@ export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: 
   token0.derivedETH = findEthPerToken(token0)
   token1.derivedETH = findEthPerToken(token1)
 
-  pair.reserveETH = pair.reserve0
-    .times(token0.derivedETH)
-    .plus(pair.reserve1.times(token1.derivedETH))
+  pair.reserveETH = pair.reserve0.times(token0.derivedETH).plus(pair.reserve1.times(token1.derivedETH))
   pair.reserveUSD = pair.reserveETH.times(ethPrice)
 
   factory.totalLiquidityETH = factory.totalLiquidityETH.plus(pair.reserveETH)

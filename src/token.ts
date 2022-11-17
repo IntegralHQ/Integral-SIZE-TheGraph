@@ -1,10 +1,10 @@
-import { Address, log, BigInt } from "@graphprotocol/graph-ts"
-import { Token } from "../generated/schema"
-import { ZERO_BD, ZERO_BI } from "./constants"
-import { TokenDefinition } from "./tokenDefinition"
-import { ERC20 } from "../generated/TwapFactory/ERC20"
-import { ERC20NameBytes } from "../generated/TwapFactory/ERC20NameBytes"
-import { ERC20SymbolBytes } from "../generated/TwapFactory/ERC20SymbolBytes"
+import { Address, log, BigInt } from '@graphprotocol/graph-ts'
+import { Token } from '../generated/schema'
+import { ZERO_BD, ZERO_BI } from './constants'
+import { TokenDefinition } from './tokenDefinition'
+import { ERC20 } from '../generated/TwapFactory/ERC20'
+import { ERC20NameBytes } from '../generated/TwapFactory/ERC20NameBytes'
+import { ERC20SymbolBytes } from '../generated/TwapFactory/ERC20SymbolBytes'
 
 function isNullEthValue(value: string): boolean {
   return value == '0x0000000000000000000000000000000000000000000000000000000000000001'
@@ -13,14 +13,14 @@ function isNullEthValue(value: string): boolean {
 function fetchTokenSymbol(tokenAddress: Address): string {
   const staticDefinition = TokenDefinition.fromAddress(tokenAddress)
   if (staticDefinition) {
-      return staticDefinition.symbol
+    return staticDefinition.symbol
   }
 
   const contract = ERC20.bind(tokenAddress)
 
   // try types string and bytes32 for symbol
   let retVal = 'unknown'
-  
+
   const symbolResult = contract.try_symbol()
   if (symbolResult.reverted) {
     const contractSymbolBytes = ERC20SymbolBytes.bind(tokenAddress)
@@ -37,10 +37,10 @@ function fetchTokenSymbol(tokenAddress: Address): string {
 
   return retVal
 }
-  
+
 function fetchTokenName(tokenAddress: Address): string {
   const staticDefinition = TokenDefinition.fromAddress(tokenAddress)
-  if(staticDefinition != null) {
+  if (staticDefinition != null) {
     return (staticDefinition as TokenDefinition).name
   }
 
@@ -77,7 +77,7 @@ function fetchTokenTotalSupply(tokenAddress: Address): BigInt | null {
 
 function fetchTokenDecimals(tokenAddress: Address): BigInt | null {
   const staticDefinition = TokenDefinition.fromAddress(tokenAddress)
-  if(staticDefinition != null) {
+  if (staticDefinition != null) {
     return staticDefinition.decimals
   }
 

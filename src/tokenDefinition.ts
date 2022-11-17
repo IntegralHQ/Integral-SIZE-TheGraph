@@ -1,5 +1,5 @@
 import { Address, BigInt } from '@graphprotocol/graph-ts'
-import { USDC_ADDRESS, WETH_ADDRESS, CVX_ADDRESS } from './constants'
+import { Config } from './constants'
 
 // Initialize a Token Definition with the attributes
 export class TokenDefinition {
@@ -20,9 +20,17 @@ export class TokenDefinition {
   static getStaticDefinitions(): Array<TokenDefinition> {
     const staticDefinitions = new Array<TokenDefinition>()
 
-    staticDefinitions.push(new TokenDefinition(Address.fromString(USDC_ADDRESS), 'USDC', 'USD Coin', BigInt.fromI32(6)))
-    staticDefinitions.push(new TokenDefinition(Address.fromString(WETH_ADDRESS), 'WETH', 'WETH', BigInt.fromI32(18)))
-    staticDefinitions.push(new TokenDefinition(Address.fromString(CVX_ADDRESS), 'CVX', 'Convex Token', BigInt.fromI32(18)))
+    staticDefinitions.push(
+      new TokenDefinition(Address.fromString(Config.mustGet('USDC')), 'USDC', 'USD Coin', BigInt.fromI32(6))
+    )
+    staticDefinitions.push(
+      new TokenDefinition(Address.fromString(Config.mustGet('WETH')), 'WETH', 'WETH', BigInt.fromI32(18))
+    )
+    if (Config.isSet('CVX')) {
+      staticDefinitions.push(
+        new TokenDefinition(Address.fromString(Config.mustGet('CVX')), 'CVX', 'Convex Token', BigInt.fromI32(18))
+      )
+    }
 
     return staticDefinitions
   }

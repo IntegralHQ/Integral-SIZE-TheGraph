@@ -1,6 +1,6 @@
-import { Address } from "@graphprotocol/graph-ts"
-import { User } from "../generated/schema"
-import { ZERO_BD } from "./constants"
+import { Address } from '@graphprotocol/graph-ts'
+import { User } from '../generated/schema'
+import { ZERO_BD } from './constants'
 
 export function createUser(address: Address): void {
   let user = User.load(address.toHexString())

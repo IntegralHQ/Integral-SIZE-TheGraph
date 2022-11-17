@@ -4,6 +4,7 @@ The Integral subgraph (SG) aims to provide a similar dataset and schema as the U
 ## How to build
 ```shell
 yarn
+yarn prepare:<mainnet|arbitrum>
 yarn codegen
 yarn build
 ```
@@ -32,5 +33,5 @@ For example:
 
 ### Deploy
 ```shell
-yarn deploy
+yarn deploy:<mainnet|arbitrum>
 ```

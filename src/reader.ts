@@ -1,10 +1,10 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts"
-import { ONE_BD, readerContract } from "./constants"
-import { convertBigIntToBigDecimal } from "./helpers"
+import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { ONE_BD, readerContract } from './constants'
+import { convertBigIntToBigDecimal } from './helpers'
 
 export function getPairReserves(pairAddress: Address): BigInt[] {
   const pairParams = readerContract.getPairParameters(pairAddress)
-  return [ pairParams.value1, pairParams.value2 ]
+  return [pairParams.value1, pairParams.value2]
 }
 
 // Returns the price of token0 in token1.

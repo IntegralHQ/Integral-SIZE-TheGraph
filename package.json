@@ -2,15 +2,32 @@
   "name": "integral-size",
   "license": "UNLICENSED",
   "scripts": {
+    "lint:prettier": "yarn prettier './src/**/*.ts'",
+    "lint:eslint": "eslint './src/**/*.ts'",
+    "lint:fix": "yarn lint:prettier --write && yarn lint:eslint --fix",
+    "prepare": "mustache config/$NETWORK_TO_PREPARE.json subgraph.template.yaml > subgraph.yaml && mustache config/$NETWORK_TO_PREPARE.json config/network.template.ts > config/network.ts",
+    "prepare:mainnet": "NETWORK_TO_PREPARE=mainnet yarn prepare",
+    "prepare:arbitrum": "NETWORK_TO_PREPARE=arbitrum yarn prepare",
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ IntegralHQ/integral-size",
-    "create-local": "graph create --node http://localhost:8020/ IntegralHQ/integral-size",
-    "remove-local": "graph remove --node http://localhost:8020/ IntegralHQ/integral-size",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 IntegralHQ/integral-size"
+    "deploy:mainnet": "graph deploy --node https://api.thegraph.com/deploy/ integralhq/integral-size",
+    "deploy:arbitrum": "graph deploy --node https://api.thegraph.com/deploy/ integralhq/integral-size-arbitrum",
+    "deploy:arbitrum-goerli": "graph deploy --node https://api.thegraph.com/deploy/ integralhq/integral-size-arbitrum-goerli",
+    "create-local": "graph create --node http://localhost:$PORT0/ IntegralHQ/integral-size-$NETWORK_TO_PREPARE",
+    "remove-local": "graph remove --node http://localhost:$PORT0/ IntegralHQ/integral-size-$NETWORK_TO_PREPARE",
+    "deploy-local": "graph deploy --node http://localhost:$PORT0/ --ipfs http://localhost:$PORT1 integralhq/integral-size-$NETWORK_TO_PREPARE",
+    "deploy-local:mainnet": "NETWORK_TO_PREPARE=mainnet PORT0=8020 PORT1=5001 yarn deploy-local"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.29.0",
-    "@graphprotocol/graph-ts": "0.26.0"
+    "@graphprotocol/graph-cli": "0.33.1",
+    "@graphprotocol/graph-ts": "0.27.0"
+  },
+  "devDependencies": {
+    "mustache": "^4.2.0",
+    "@typescript-eslint/eslint-plugin": "^4.9.1",
+    "@typescript-eslint/parser": "^4.9.1",
+    "eslint": "^7.15.0",
+    "prettier": "^2.1.2",
+    "typescript": "^4.3.5"
   }
 }

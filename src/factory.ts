@@ -1,11 +1,11 @@
-import { Factory } from "../generated/schema"
-import { createBundle } from "./bundle"
-import { FACTORY_ADDRESS, ZERO_BD, ZERO_BI } from "./constants"
+import { Factory } from '../generated/schema'
+import { createBundle } from './bundle'
+import { Config, ZERO_BD, ZERO_BI } from './constants'
 
 export function loadOrCreateFactory(): Factory {
-  let factory = Factory.load(FACTORY_ADDRESS)
+  let factory = Factory.load(Config.mustGet('FACTORY'))
   if (!factory) {
-    factory = new Factory(FACTORY_ADDRESS)
+    factory = new Factory(Config.mustGet('FACTORY'))
 
     factory.pairCount = 0
     factory.totalVolumeUSD = ZERO_BD

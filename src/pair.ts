@@ -1,13 +1,14 @@
 import { BigInt, BigDecimal, store, Address, Bytes, log } from '@graphprotocol/graph-ts'
-import { Transaction, Mint, Burn, Swap, Pair, Token} from '../generated/schema'
-import { Pair as PairTemplate} from "../generated/templates"
+import { Transaction, Mint, Burn, Swap, Pair, Token } from '../generated/schema'
+import { Pair as PairTemplate } from '../generated/templates'
 import {
   TwapPair as PairContract,
   Mint as MintEvent,
   Burn as BurnEvent,
   Swap as SwapEvent,
-  Transfer as TransferEvent, 
-  SetSwapFee} from '../generated/templates/Pair/TwapPair'
+  Transfer as TransferEvent,
+  SetSwapFee,
+} from '../generated/templates/Pair/TwapPair'
 import { PairCreated as PairCreatedEvent } from '../generated/TwapFactory/TwapFactory'
 import { updateDayData, updatePairDayData, updatePairHourData, updateTokenDayData } from './dayUpdates'
 import { loadOrCreateFactory } from './factory'
@@ -23,7 +24,7 @@ export function handlePairCreated(event: PairCreatedEvent): void {
   const factory = loadOrCreateFactory()
   const token0 = loadOrCreateToken(event.params.token0)
   const token1 = loadOrCreateToken(event.params.token1)
-  
+
   if (token0 && token1) {
     // Create the pair entity
     const pair = new Pair(event.params.pair.toHexString())
@@ -45,10 +46,10 @@ export function handlePairCreated(event: PairCreatedEvent): void {
     pair.feesUSD = ZERO_BD
     pair.token0Price = ZERO_BD
     pair.token1Price = ZERO_BD
-    
+
     // Start indexing the new pair contract
     PairTemplate.create(event.params.pair)
-    
+
     factory.pairCount += 1
 
     // Save all entities
@@ -62,7 +63,7 @@ export function handlePairCreated(event: PairCreatedEvent): void {
 function isCompleteMint(mintId: string): boolean {
   const mintEntity = Mint.load(mintId)
   if (!mintEntity) {
-      return false
+    return false
   }
   return mintEntity.sender !== null
 }
@@ -117,10 +118,7 @@ export function handleTransfer(event: TransferEvent): void {
     // create new mint if no mints so far or if last one is done already
     if (mints.length === 0 || isCompleteMint(mints[mints.length - 1])) {
       const mint = new Mint(
-        event.transaction.hash
-          .toHexString()
-          .concat('-')
-          .concat(BigInt.fromI32(mints.length).toString())
+        event.transaction.hash.toHexString().concat('-').concat(BigInt.fromI32(mints.length).toString())
       )
       mint.transaction = transaction.id
       mint.pair = pair.id
@@ -143,10 +141,7 @@ export function handleTransfer(event: TransferEvent): void {
   if (event.params.to.toHexString() == pair.id) {
     const burns = transaction.burns
     const burn = new Burn(
-      event.transaction.hash
-        .toHexString()
-        .concat('-')
-        .concat(BigInt.fromI32(burns.length).toString())
+      event.transaction.hash.toHexString().concat('-').concat(BigInt.fromI32(burns.length).toString())
     )
     burn.transaction = transaction.id
     burn.pair = pair.id
@@ -179,10 +174,7 @@ export function handleTransfer(event: TransferEvent): void {
         burn = currentBurn as Burn
       } else {
         burn = new Burn(
-          event.transaction.hash
-            .toHexString()
-            .concat('-')
-            .concat(BigInt.fromI32(burns.length).toString())
+          event.transaction.hash.toHexString().concat('-').concat(BigInt.fromI32(burns.length).toString())
         )
         burn.transaction = transaction.id
         burn.needsComplete = false
@@ -192,12 +184,7 @@ export function handleTransfer(event: TransferEvent): void {
         burn.timestamp = transaction.timestamp
       }
     } else {
-      burn = new Burn(
-        event.transaction.hash
-          .toHexString()
-          .concat('-')
-          .concat(BigInt.fromI32(burns.length).toString())
-      )
+      burn = new Burn(event.transaction.hash.toHexString().concat('-').concat(BigInt.fromI32(burns.length).toString()))
       burn.transaction = transaction.id
       burn.needsComplete = false
       burn.pair = pair.id
@@ -258,7 +245,7 @@ export function handleTransfer(event: TransferEvent): void {
 
   transaction.save()
 }
-  
+
 export function handleMint(event: MintEvent): void {
   const thisFunctionName = 'handleMint'
 
@@ -267,11 +254,14 @@ export function handleMint(event: MintEvent): void {
     log.error('{}: Cannot load transaction {}', [thisFunctionName, event.transaction.hash.toHexString()])
     return
   }
-  
+
   const mints = transaction.mints
   const mint = Mint.load(mints[mints.length - 1])
   if (!mint) {
-    log.error('{}: Cannot load the last mint in transaction {}', [thisFunctionName, event.transaction.hash.toHexString()])
+    log.error('{}: Cannot load the last mint in transaction {}', [
+      thisFunctionName,
+      event.transaction.hash.toHexString(),
+    ])
     return
   }
 
@@ -280,7 +270,7 @@ export function handleMint(event: MintEvent): void {
     log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHex()])
     return
   }
-  
+
   const factory = loadOrCreateFactory()
 
   const token0 = Token.load(pair.token0)
@@ -346,7 +336,7 @@ export function handleMint(event: MintEvent): void {
 
 export function handleBurn(event: BurnEvent): void {
   const thisFunctionName = 'handleBurn'
-  
+
   const transaction = Transaction.load(event.transaction.hash.toHexString())
 
   // safety check
@@ -357,7 +347,10 @@ export function handleBurn(event: BurnEvent): void {
   const burns = transaction.burns
   const burn = Burn.load(burns[burns.length - 1])
   if (!burn) {
-    log.error('{}: Cannot load the last burn in transaction {}', [thisFunctionName, event.transaction.hash.toHexString()])
+    log.error('{}: Cannot load the last burn in transaction {}', [
+      thisFunctionName,
+      event.transaction.hash.toHexString(),
+    ])
     return
   }
 
@@ -419,7 +412,7 @@ export function handleBurn(event: BurnEvent): void {
   if (burn.sender !== null) {
     const liquidityPosition = createLiquidityPosition(event.address, Address.fromBytes(burn.sender as Bytes))
     if (liquidityPosition) {
-        createLiquiditySnapshot(liquidityPosition, event)
+      createLiquiditySnapshot(liquidityPosition, event)
     }
   }
 
@@ -440,7 +433,7 @@ export function handleSwap(event: SwapEvent): void {
   if (!pair) {
     log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHex()])
     return
-  }  
+  }
 
   const token0 = Token.load(pair.token0)
   if (!token0) {
@@ -523,10 +516,7 @@ export function handleSwap(event: SwapEvent): void {
   }
   const swaps = transaction.swaps
   const swap = new Swap(
-    event.transaction.hash
-      .toHexString()
-      .concat('-')
-      .concat(BigInt.fromI32(swaps.length).toString())
+    event.transaction.hash.toHexString().concat('-').concat(BigInt.fromI32(swaps.length).toString())
   )
 
   // update swap event
@@ -612,9 +602,9 @@ export function handleSetSwapFeeEvent(event: SetSwapFee): void {
   if (!pair) {
     log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHex()])
     return
-  }  
-  
+  }
+
   pair.swapFeeRate = convertBigIntToBigDecimal(event.params.fee, BI_18)
-  
+
   pair.save()
 }

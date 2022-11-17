@@ -1,6 +1,7 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts"
-import { ONE_BI, ZERO_BI } from "./constants"
-import { UniswapPairV2 } from "../generated/templates/Pair/UniswapPairV2";
+import { Address, BigDecimal, BigInt } from '@graphprotocol/graph-ts'
+import { ONE_BI, ZERO_BI } from './constants'
+import { UniswapPairV2 } from '../generated/templates/Pair/UniswapPairV2'
+import { UniswapPoolV3 } from '../generated/templates/Pair/UniswapPoolV3'
 
 export function exponentToBigDecimal(decimals: BigInt): BigDecimal {
   let bd = BigDecimal.fromString('1')
@@ -19,4 +20,8 @@ export function convertBigIntToBigDecimal(tokenAmount: BigInt, decimals: BigInt)
 
 export function getUniswapV2PairContract(pairAddress: Address): UniswapPairV2 {
   return UniswapPairV2.bind(pairAddress)
+}
+
+export function getUniswapV3PoolContract(poolAddress: Address): UniswapPoolV3 {
+  return UniswapPoolV3.bind(poolAddress)
 }

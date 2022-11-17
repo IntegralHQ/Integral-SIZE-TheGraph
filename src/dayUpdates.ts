@@ -6,9 +6,9 @@ import { loadOrCreateFactory } from './factory'
 
 export function updateDayData(event: ethereum.Event): DayData {
   const factory = loadOrCreateFactory()
-  let timestamp = event.block.timestamp.toI32()
-  let dayID = timestamp / 86400
-  let dayStartTimestamp = dayID * 86400
+  const timestamp = event.block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
   let dayData = DayData.load(dayID.toString())
   if (dayData === null) {
     dayData = new DayData(dayID.toString())
@@ -31,16 +31,13 @@ export function updateDayData(event: ethereum.Event): DayData {
 
 export function updatePairDayData(event: ethereum.Event): PairDayData | null {
   const thisFunctionName = 'updatePairDayData'
-  
-  let timestamp = event.block.timestamp.toI32()
-  let dayID = timestamp / 86400
-  let dayStartTimestamp = dayID * 86400
-  let dayPairID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(BigInt.fromI32(dayID).toString())
-  
-  let pair = Pair.load(event.address.toHexString())
+
+  const timestamp = event.block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
+  const dayPairID = event.address.toHexString().concat('-').concat(BigInt.fromI32(dayID).toString())
+
+  const pair = Pair.load(event.address.toHexString())
   if (!pair) {
     log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHexString()])
     return null
@@ -73,15 +70,12 @@ export function updatePairDayData(event: ethereum.Event): PairDayData | null {
 export function updatePairHourData(event: ethereum.Event): PairHourData | null {
   const thisFunctionName = 'updatePairDayData'
 
-  let timestamp = event.block.timestamp.toI32()
-  let hourIndex = timestamp / 3600 // get unique hour within unix history
-  let hourStartUnix = hourIndex * 3600 // want the rounded effect
-  let hourPairID = event.address
-    .toHexString()
-    .concat('-')
-    .concat(BigInt.fromI32(hourIndex).toString())
-  
-  let pair = Pair.load(event.address.toHexString())
+  const timestamp = event.block.timestamp.toI32()
+  const hourIndex = timestamp / 3600 // get unique hour within unix history
+  const hourStartUnix = hourIndex * 3600 // want the rounded effect
+  const hourPairID = event.address.toHexString().concat('-').concat(BigInt.fromI32(hourIndex).toString())
+
+  const pair = Pair.load(event.address.toHexString())
   if (!pair) {
     log.error('{}: Cannot load pair {}', [thisFunctionName, event.address.toHexString()])
     return null
@@ -110,14 +104,11 @@ export function updatePairHourData(event: ethereum.Event): PairHourData | null {
 }
 
 export function updateTokenDayData(token: Token, event: ethereum.Event): TokenDayData {
-  let bundle = loadOrCreateBundle()
-  let timestamp = event.block.timestamp.toI32()
-  let dayID = timestamp / 86400
-  let dayStartTimestamp = dayID * 86400
-  let tokenDayID = token.id
-    .toString()
-    .concat('-')
-    .concat(BigInt.fromI32(dayID).toString())
+  const bundle = loadOrCreateBundle()
+  const timestamp = event.block.timestamp.toI32()
+  const dayID = timestamp / 86400
+  const dayStartTimestamp = dayID * 86400
+  const tokenDayID = token.id.toString().concat('-').concat(BigInt.fromI32(dayID).toString())
 
   let tokenDayData = TokenDayData.load(tokenDayID)
   if (tokenDayData === null) {
