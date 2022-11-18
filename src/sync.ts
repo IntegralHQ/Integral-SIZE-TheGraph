@@ -1,10 +1,10 @@
 import { Address } from '@graphprotocol/graph-ts'
 import { Factory, Pair, Token } from '../generated/schema'
 import { loadOrCreateBundle } from './bundle'
-import { ONE_BD, ZERO_BD } from './constants'
+import { ZERO_BD } from './constants'
 import { convertBigIntToBigDecimal } from './helpers'
 import { getEthPriceInUSD, findEthPerToken } from './pricing'
-import { getToken0Price, getPairReserves } from './reader'
+import { getToken0Price, getToken1Price, getPairReserves } from './reader'
 
 export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: Token): void {
   // reset factory liquidity by subtracting this pair's liquidity
@@ -31,7 +31,7 @@ export function handleSync(factory: Factory, pair: Pair, token0: Token, token1: 
   // Calculate token prices
   pair.token0Price = getToken0Price(Address.fromString(pair.id), token1.decimals)
   if (pair.token0Price.notEqual(ZERO_BD)) {
-    pair.token1Price = ONE_BD.div(pair.token0Price)
+    pair.token1Price = getToken1Price(Address.fromString(pair.id), token0.decimals)
   } else {
     pair.token1Price = ZERO_BD
   }

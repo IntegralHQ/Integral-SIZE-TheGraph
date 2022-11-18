@@ -19,7 +19,7 @@ services:
       ipfs: 'ipfs:5001'
       # Change next line if you want to connect to a different JSON-RPC endpoint
       # mainnet:http://host.docker.internal:8545
-      ethereum: 'arbitrum-goerli:https://arbitrum-mainnet.infura.io/v3/<INFURA_API_KEY>'
+      ethereum: 'arbitrum-one:https://arbitrum-mainnet.infura.io/v3/<INFURA_API_KEY>'
       GRAPH_LOG: debug
       GRAPH_ETHEREUM_MAX_BLOCK_RANGE_SIZE: 5000
   ipfs:

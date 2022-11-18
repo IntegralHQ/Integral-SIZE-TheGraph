@@ -59,7 +59,7 @@ export function findEthPerToken(token: Token): BigDecimal {
     }
 
     return token0.id == Config.mustGet('WETH')
-      ? getToken1Price(pairAddress, token1.decimals)
+      ? getToken1Price(pairAddress, token0.decimals)
       : getToken0Price(pairAddress, token1.decimals)
   }
 
@@ -132,6 +132,7 @@ export function findEthPerToken(token: Token): BigDecimal {
             )
           }
         }
+        log.debug('{}, find with uniswap v3 {}, {}', [thisFunctionName, token.id, tokenPriceInEth.toString()])
         return tokenPriceInEth
       }
     }
