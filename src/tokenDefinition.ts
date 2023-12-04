@@ -31,6 +31,11 @@ export class TokenDefinition {
         new TokenDefinition(Address.fromString(Config.mustGet('CVX')), 'CVX', 'Convex Token', BigInt.fromI32(18))
       )
     }
+    if (Config.isSet('USDC.e')) {
+      staticDefinitions.push(
+        new TokenDefinition(Address.fromString(Config.mustGet('USDC.e')), 'USDC.e', 'Bridged USDC', BigInt.fromI32(6))
+      )
+    }
 
     return staticDefinitions
   }

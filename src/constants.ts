@@ -35,8 +35,9 @@ mainnet.set(UNISWAP_V2_FACTORY_KEY, '0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f'
 const arbitrum = new TypedMap<string, string>()
 arbitrum.set('FACTORY', '0x717ef162cf831db83c51134734a15d1ebe9e516a')
 arbitrum.set('WETH', '0x82af49447d8a07e3bd95bd0d56f35241523fbab1')
-arbitrum.set('USDC', '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8')
-arbitrum.set('WETH_USDC', '0x4bca34ad27df83566016b55c60dd80a9eb14913b')
+arbitrum.set('USDC.e', '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8')
+arbitrum.set('USDC', '0xaf88d065e77c8cc2239327c5edb3a432268e5831')
+arbitrum.set('WETH_USDC.e', '0x4bca34ad27df83566016b55c60dd80a9eb14913b')
 arbitrum.set('READER', '0xf5c1ee7be0bbe1d77158b114dc77d8a94f2fec02')
 arbitrum.set(UNISWAP_V3_FACTORY_KEY, '0x1f98431c8ad98523631ae4a59f267346ea31f984')
 

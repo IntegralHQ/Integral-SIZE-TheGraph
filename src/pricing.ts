@@ -21,12 +21,13 @@ import { UniswapPoolV3 } from '../generated/templates/Pair/UniswapPoolV3'
 
 export function getEthPriceInUSD(): BigDecimal {
   const wethAddress = Config.mustGet('WETH')
-  const usdcAddress = Config.mustGet('USDC')
+  const usdcAddress = Config.isSet('USDC.e') ? Config.mustGet('USDC.e') : Config.mustGet('USDC')
+  const pairAddress = Config.isSet('WETH_USDC.e') ? Config.mustGet('WETH_USDC.e') : Config.mustGet('WETH_USDC')
   // Addresses in config should be lowercased already
   if (usdcAddress < wethAddress) {
-    return getToken1Price(Address.fromString(Config.mustGet('WETH_USDC')), WETH_DECIMALS)
+    return getToken1Price(Address.fromString(pairAddress), WETH_DECIMALS)
   } else {
-    return getToken0Price(Address.fromString(Config.mustGet('WETH_USDC')), WETH_DECIMALS)
+    return getToken0Price(Address.fromString(pairAddress), WETH_DECIMALS)
   }
 }
 

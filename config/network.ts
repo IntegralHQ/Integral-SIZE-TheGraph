@@ -1,1 +1,1 @@
-export const NETWORK = "arbitrum-one"
+export const NETWORK = "mainnet"
